@@ -84,7 +84,7 @@ void setup() {
     runner.addTask(button);
     button.enable();
 
-    player.play(0);
+    player.play(preferences.getInt("track",0));
 
     currentUI = new LyricUI();
     currentUI->setup();
