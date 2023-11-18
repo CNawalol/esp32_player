@@ -21,7 +21,6 @@ LyricParser lyricParser;
 String playName = "";
 bool qrc;
 int currentPlay = 0;
-u_long starts = 0;
 extern float m_audioCurrentTime;
 
 void Player::setup() {
@@ -91,7 +90,8 @@ void Player::nextTrack() {
 }
 
 void Player::play(int i) {
-    if(!SD.exists(playlist[i].path.c_str())){
+    audio.stopSong();
+    if (!SD.exists(playlist[i].path.c_str())) {
         i = 0;
     }
     audio.connecttoSD(playlist[i].path.c_str());
@@ -107,6 +107,5 @@ void Player::play(int i) {
     }
     playName = playlist[i].name.c_str();
     currentPlay = i;
-    starts = millis();
     preferences.putInt("track",i);
 }

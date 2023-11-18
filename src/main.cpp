@@ -89,19 +89,24 @@ void setup() {
     currentUI = new LyricUI();
     currentUI->setup();
 
-    xTaskCreate([](void *args) {
-        while (1) {
+    xTaskCreatePinnedToCore([](void* args) {
+        while (true) {
             audio.loop();
+            vTaskDelay(0);
         }
-    }, "audio", 2048, NULL, 1, NULL);
+    }, "audio", 10000, NULL, 1, NULL, 0);
 
-    xTaskCreate([](void *args) {
-        while (1) {
+    xTaskCreatePinnedToCore([](void* args) {
+        while (true) {
             currentUI->loop();
+            runner.execute();
+            vTaskDelay(0);
         }
-    }, "render", 2048, NULL, 2, NULL);
+    }, "render", 10000, NULL, 2, NULL, 1);
 }
 
 void loop() {
-    runner.execute();
+    /*audio.loop();
+    currentUI->loop();
+    runner.execute();*/
 }
