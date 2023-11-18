@@ -11,6 +11,7 @@
 #define I2S_DOUT 14
 #define I2S_LRCK 27
 #define I2S_BCK 12
+#define I2S_SCK 15
 
 DynamicJsonDocument doc(512);
 
@@ -26,6 +27,8 @@ extern float m_audioCurrentTime;
 void Player::setup() {
     audio.setPinout(I2S_BCK, I2S_LRCK, I2S_DOUT);
     audio.setVolume(preferences.getUInt("volume", 12));
+    pinMode(15,OUTPUT);
+    digitalWrite(15,HIGH);
 }
 
 void Player::scanSD() {
@@ -91,6 +94,7 @@ void Player::nextTrack() {
 
 void Player::play(int i) {
     audio.stopSong();
+    digitalWrite(15,HIGH);
     if (!SD.exists(playlist[i].path.c_str())) {
         i = 0;
     }
@@ -98,14 +102,21 @@ void Player::play(int i) {
     String n = String(playlist[i].name.c_str());
     n.replace(".mp3",".qrc");
     String p = "/qrc/" + n;
-    if(SD.exists(p.c_str())){
-        String read = SD.open(p.c_str()).readString();
-        lyricParser.parser(read.c_str());
-        qrc = true;
-    }else{
+    if (SD.exists(p.c_str())) {
+        try {
+            String read = SD.open(p.c_str()).readString();
+            lyricParser.parser(read.c_str());
+            qrc = true;
+        }catch (std::exception& e) {
+            qrc = false;
+            Serial.println(e.what());
+        }
+    }
+    else {
         qrc = false;
     }
     playName = playlist[i].name.c_str();
     currentPlay = i;
     preferences.putInt("track",i);
+    digitalWrite(15,LOW);
 }

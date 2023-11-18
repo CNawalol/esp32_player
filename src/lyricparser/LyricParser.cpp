@@ -11,6 +11,7 @@ vector<Line> lines;
 extern U8G2 u8g2;
 
 vector<Line> LyricParser::parser(string qrc) {
+    lines.clear();
     String r = String(qrc.c_str());
     r.replace("\r\n","\n");
     qrc = r.c_str();
