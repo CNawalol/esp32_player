@@ -63,21 +63,27 @@ void LyricUI::loop() {
     u8g2.sendBuffer();
 }
 
-void LyricUI::tick() {
-    int b = digitalRead(35);
-    int c = digitalRead(34);
-    int a = digitalRead(39);
-    if(b == 1){
-        if(audio.isRunning()){
-            Player::nextTrack();
-        }
-    }
-    if(c == 1){
-        if(audio.isRunning()){
-            player.play((int)random(0,player.playlist.size() - 1));
-        }
-    }
-    if(a == 1){
-        player.play(0);
+void LyricUI::ir(decode_results results) {
+    switch (results.command) {
+        case 0x40:
+            player.nextTrack();
+            break;
+        case 0x44:
+            player.previousTrack();
+            break;
+        case 0x15:
+            audio.setVolume(audio.getVolume() + 1);
+            preferences.putInt("volume",audio.getVolume());
+            break;
+        case 0x7:
+            audio.setVolume(max(audio.getVolume() - 1,0));
+            preferences.putInt("volume",audio.getVolume());
+            break;
+        case 0x43:
+            audio.pauseResume();
+            break;
+        case 0x16:
+            player.play(0);
+            break;
     }
 }

@@ -11,8 +11,8 @@
 #include "ui/UI.h"
 #include "Player.h"
 #include "U8g2lib.h"
-#include "TaskScheduler.h"
 #include "ui/LyricUI.h"
+#include "IRrecv.h"
 
 #define OLED_SPI_CS 5
 #define OLED_SPI_DC 26
@@ -23,6 +23,7 @@
 #define SD_SPI_MISO 32
 #define SD_SPI_MOSI 25
 #define SD_SPI_CS 13
+#define IRRemote 35
 
 SPIClass H(VSPI);
 SPIClass V(HSPI);
@@ -30,10 +31,8 @@ U8G2_SH1106_128X64_NONAME_F_4W_HW_SPI u8g2(U8G2_R0, OLED_SPI_CS, OLED_SPI_DC, OL
 Preferences preferences;
 Player player;
 UI *currentUI;
-Task button(2500, TASK_FOREVER, []() {
-    currentUI->tick();
-});
-Scheduler runner;
+IRrecv iRrecv(IRRemote);
+decode_results results;
 
 extern Audio audio;
 
@@ -58,16 +57,7 @@ void setup() {
     // 初始化配置
     preferences.begin("config");
 
-    /*if(SD.exists("/playlist.json")){
-        readPlaylist();
-        Serial.println("readPlaylist");
-    } else{
-        scanSD();
-        Serial.println("scanSD");
-    }*/
-
     player.setup();
-
     player.scanSD();
 
     for (const Song &s: player.playlist) {
@@ -79,10 +69,8 @@ void setup() {
     pinMode(34, INPUT_PULLUP);
     pinMode(39, INPUT_PULLUP);
 
-    // 初始化定时器
-    runner.init();
-    runner.addTask(button);
-    button.enable();
+    // 初始化红外遥控
+    iRrecv.enableIRIn();
 
     player.play(preferences.getInt("track",0));
 
@@ -91,7 +79,9 @@ void setup() {
 
     xTaskCreatePinnedToCore([](void* args) {
         while (true) {
-            audio.loop();
+            if(audio.isRunning()){
+                audio.loop();
+            }
             vTaskDelay(0);
         }
     }, "audio", 10000, NULL, 1, NULL, 0);
@@ -99,7 +89,10 @@ void setup() {
     xTaskCreatePinnedToCore([](void* args) {
         while (true) {
             currentUI->loop();
-            runner.execute();
+            if(iRrecv.decode(&results)){
+                currentUI->ir(results);
+                iRrecv.resume();
+            }
             vTaskDelay(0);
         }
     }, "render", 10000, NULL, 2, NULL, 1);

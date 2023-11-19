@@ -10,7 +10,7 @@
 class LyricUI : public UI{
     void setup() override;
     void loop() override;
-    void tick() override;
+    void ir(decode_results results) override;
 };
 
 

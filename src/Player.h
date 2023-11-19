@@ -17,7 +17,8 @@ public:
     void setup();
     void scanSD();
     void play(int i);
-    static void nextTrack();
+    void nextTrack();
+    void previousTrack();
 private:
     static bool endsWith(const std::string &str, const std::string& suffix);
 };

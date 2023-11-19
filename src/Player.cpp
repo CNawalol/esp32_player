@@ -5,15 +5,12 @@
 #include <Preferences.h>
 #include "Player.h"
 #include "SD.h"
-#include "ArduinoJson.h"
 #include "lyricparser/LyricParser.h"
 
 #define I2S_DOUT 14
 #define I2S_LRCK 27
 #define I2S_BCK 12
 #define I2S_SCK 15
-
-DynamicJsonDocument doc(512);
 
 extern Preferences preferences;
 extern Player player;
@@ -26,42 +23,23 @@ extern float m_audioCurrentTime;
 
 void Player::setup() {
     audio.setPinout(I2S_BCK, I2S_LRCK, I2S_DOUT);
-    audio.setVolume(preferences.getUInt("volume", 12));
-    pinMode(15,OUTPUT);
-    digitalWrite(15,HIGH);
+    audio.setVolume(preferences.getInt("volume", 12));
+    pinMode(I2S_SCK,INPUT_PULLUP);
 }
 
 void Player::scanSD() {
     playlist.clear();
-    File playlistFile = SD.open("/playlist.json",FILE_WRITE);
     File root = SD.open("/music");
     File file = root.openNextFile();
     while (file) {
         if (endsWith(file.name(), ".mp3")) {
-            JsonObject jo = doc.createNestedObject();
             Song song;
-            jo["name"] = song.name = file.name();
-            jo["path"] = song.path = file.path();
+            song.name = file.name();
+            song.path = file.path();
             playlist.emplace_back(song);
         }
         file = root.openNextFile();
     }
-    serializeJson(doc, playlistFile);
-    playlistFile.flush();
-    playlistFile.close();
-}
-
-void readPlaylist(){
-    File playlistFile = SD.open("/playlist.json");
-    deserializeJson(doc,playlistFile);
-    for (JsonObject item : doc.as<JsonArray>()) {
-        const char* name = item["name"];
-        const char* path = item["path"];
-        Song song;
-        song.name = name;
-        song.path = path;
-    }
-    playlistFile.close();
 }
 
 bool Player::endsWith(const std::string &str, const std::string& suffix) {
@@ -79,7 +57,7 @@ void audio_id3data(const char *info){  //id3 metadata
 
 void audio_eof_mp3(const char *info){  //end of file
     Serial.print("eof_mp3     ");Serial.println(info);
-    Player::nextTrack();
+    player.nextTrack();
 }
 
 void Player::nextTrack() {
@@ -92,9 +70,19 @@ void Player::nextTrack() {
     player.play(currentPlay);
 }
 
+void Player::previousTrack() {
+    if(currentPlay - 1 < 0){
+        currentPlay = player.playlist.size() - 1;
+    } else{
+        currentPlay--;
+    }
+    Serial.print("Previous track: ");Serial.println(currentPlay);
+    player.play(currentPlay);
+}
+
 void Player::play(int i) {
+    pinMode(I2S_SCK,INPUT_PULLUP);
     audio.stopSong();
-    digitalWrite(15,HIGH);
     if (!SD.exists(playlist[i].path.c_str())) {
         i = 0;
     }
@@ -109,7 +97,7 @@ void Player::play(int i) {
             qrc = true;
         }catch (std::exception& e) {
             qrc = false;
-            Serial.println(e.what());
+            Serial.print("Read Qrc Error: ");Serial.println(p);
         }
     }
     else {
@@ -118,5 +106,5 @@ void Player::play(int i) {
     playName = playlist[i].name.c_str();
     currentPlay = i;
     preferences.putInt("track",i);
-    digitalWrite(15,LOW);
+    pinMode(I2S_SCK,INPUT_PULLDOWN);
 }

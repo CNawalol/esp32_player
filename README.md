@@ -27,13 +27,10 @@
 #define SD_SPI_MISO 32
 #define SD_SPI_MOSI 25
 #define SD_SPI_CS 13
+#define IRRemote 35 // 红外接收器
 ```
 
-34 管脚随机切歌
-
-35 管脚下一首
-
-39 管脚恢复到第一首
+使用 MP3 红外遥控器控制
 
 如果想要精确逐词需要自行修改`ESP32-audioI2S`的`getAudioCurrentTime`返回类型为float
 
