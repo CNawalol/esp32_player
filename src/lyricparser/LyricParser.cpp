@@ -43,10 +43,13 @@ vector<Line> LyricParser::parser(string qrc) {
 
         for (size_t pos2 = 0; pos2 < wordsAndTime.length();) {
             size_t s = wordsAndTime.find_first_of("(", pos2);
+            if (s == std::string::npos)
+                break;
             size_t e = wordsAndTime.find_first_of(")", s);
+            if (e == std::string::npos)
+                break;
             string word = wordsAndTime.substr(pos2, s - pos2);
 
-//            Serial.print(s);Serial.print(" | ");Serial.println(e);
             string td = wordsAndTime.substr(s, e - s);
             long wordStartTime, wordDuration;
             sscanf(td.c_str(), "(%ld,%ld)", &wordStartTime, &wordDuration);
