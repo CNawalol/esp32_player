@@ -79,9 +79,7 @@ void setup() {
 
     xTaskCreatePinnedToCore([](void* args) {
         while (true) {
-            if(audio.isRunning()){
-                audio.loop();
-            }
+            audio.loop();
             vTaskDelay(0);
         }
     }, "audio", 10000, NULL, 1, NULL, 0);

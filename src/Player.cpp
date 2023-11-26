@@ -10,7 +10,6 @@
 #define I2S_DOUT 14
 #define I2S_LRCK 27
 #define I2S_BCK 12
-#define I2S_SCK 15
 
 extern Preferences preferences;
 extern Player player;
@@ -24,7 +23,6 @@ extern float m_audioCurrentTime;
 void Player::setup() {
     audio.setPinout(I2S_BCK, I2S_LRCK, I2S_DOUT);
     audio.setVolume(preferences.getInt("volume", 12));
-    pinMode(I2S_SCK,INPUT_PULLUP);
 }
 
 void Player::scanSD() {
@@ -81,7 +79,6 @@ void Player::previousTrack() {
 }
 
 void Player::play(int i) {
-    pinMode(I2S_SCK,INPUT_PULLUP);
     audio.stopSong();
     if (!SD.exists(playlist[i].path.c_str())) {
         i = 0;
@@ -106,5 +103,4 @@ void Player::play(int i) {
     playName = playlist[i].name.c_str();
     currentPlay = i;
     preferences.putInt("track",i);
-    pinMode(I2S_SCK,INPUT_PULLDOWN);
 }
